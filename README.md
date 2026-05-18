@@ -75,19 +75,79 @@ cp .env.example .env
 npm run dev
 ```
 
+### Environment Variables
+
+```bash
+# .env
+VITE_GITHUB_TOKEN=your_github_personal_access_token
+```
+
+> Without a token → 60 requests/hour  
+> With a token → 5,000 requests/hour  
+> Generate one at: https://github.com/settings/tokens
+
+---
+
+## 🔍 Search Guide
+
+| What you type | What happens |
+|---|---|
+| `react` | Search repositories matching "react" |
+| `vercel` | Show all repositories from vercel (user/org) |
+| `facebook/react` | Show details of that specific repository |
+| `face/book/x` | Show an error — invalid format |
+
+---
+
+## 🛠 Tech Stack
+
+| Part | Technology | Why |
+|---|---|---|
+| Framework | React + Vite + TypeScript | Fast dev setup, type-safe API handling |
+| Styling | TailwindCSS | Utility-first, responsive without extra files |
+| Charts | Recharts | Lightweight, composable, works well with React |
+| API | GitHub REST API | Official, well-documented, no backend needed |
+
+---
+
 ## 💭 What I'd improve with more time
-1. **Pagination** — search results show first page only (30 results).
-   Real search should let users load more.
 
-2. **Language filter** — let users filter top repos by language,
-   e.g. "show me the most starred Python repos."
+These aren't random tech improvements — each one is tied directly to a real problem one of the three target users would face.
 
-3. **Caching** — every page load re-fetches everything.
-   A simple localStorage cache with TTL would cut API usage significantly.
+---
 
-4. **Larger sample for Top Languages** — 100 repos is fine for a demo,
-   but 500-1000 would give more statistically meaningful results.
+**1. Real Star Velocity — for The Tech Trend Hunter**
 
-5. **Real trending data** — current "trending" is simulated by filtering
-   on creation date. A proper solution needs a backend that snapshots
-   star counts daily and computes the delta.
+Right now "trending" means "created recently + high stars." That's a reasonable proxy, but it doesn't capture momentum. A repo created 2 years ago that suddenly gained 5,000 stars this week is trending — but my current logic wouldn't surface it.
+
+A proper solution: a lightweight backend (cron job) that snapshots star counts every 24 hours and computes the delta. This would give the Tech Trend Hunter the signal they actually care about — not just "what's new" but "what's accelerating."
+
+---
+
+**2. Filter by Language — for The Tech Trend Hunter**
+
+A CTO evaluating whether to adopt Rust or Go doesn't want to see Python repos mixed in. Letting users filter Top Repositories and Trending by language would turn this from a general dashboard into a focused decision-making tool.
+
+---
+
+**3. "Good First Issue" Signal — for The Open Source Contributor**
+
+The Open Source Contributor's core problem isn't finding popular repos — it's finding repos where they can actually contribute. Adding a filter for repos with open `good first issue` labels (available via GitHub Issues API) would directly solve that. This is the one improvement that would most change the value proposition for that user group.
+
+---
+
+**4. Pagination and Load More — for all users**
+
+Search results currently cap at 30. A user searching for "machine learning" gets 30 of 180,000 results. Adding a "Load More" button (not infinite scroll — that's harder to control) would let users explore deeper without rebuilding the whole search flow.
+
+---
+
+**5. Client-side Caching — for The Evaluator**
+
+Every page load re-fetches everything, which burns through rate limit quickly and feels slow on repeat visits. A simple `localStorage` cache with a 5-minute TTL would cut API calls significantly and make the app feel faster — without any backend.
+
+---
+
+**6. Larger Sample for Top Languages**
+
+100 repos is enough for a demo but statistically thin. With `Promise.all` across 5–10 pages (500–1000 repos), the language distribution would be far more representative — and the chart would become a genuinely useful signal rather than an approximation.

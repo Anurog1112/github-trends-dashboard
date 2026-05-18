@@ -79,7 +79,7 @@ export function Navbar({ onSearch, onClear }: NavbarProps) {
           {/* Search */}
           <form
             onSubmit={handleSubmit}
-            className="flex flex-1 items-center gap-2 max-w-2xl mx-auto"
+            className="flex items-center gap-2 w-full max-w-2xl ml-auto"
           >
             <div
               className={`flex-1 relative rounded-xl transition-all duration-200 ${

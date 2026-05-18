@@ -60,19 +60,19 @@ interface CustomBarLabelProps {
   x?: string | number;
   y?: string | number;
   width?: string | number;
-  value?: string | number | null | boolean;
+  value?: any;
   index?: number;
   data: ChartItem[];
 }
 
 function CustomBarLabel(props: CustomBarLabelProps) {
-  const { x, y, width, value, index = 0, data } = props;
-  const xNum = Number(x ?? 0);
-  const yNum = Number(y ?? 0);
-  const widthNum = Number(width ?? 0);
-  const valueNum = Number(value ?? 0);
+  const { x, y, width, value = 0, index = 0, data } = props;
+  const xNum = typeof x === 'string' ? parseFloat(x) : (x ?? 0);
+  const yNum = typeof y === 'string' ? parseFloat(y) : (y ?? 0);
+  const widthNum = typeof width === 'string' ? parseFloat(width) : (width ?? 0);
+  const valueNum = typeof value === 'string' ? parseFloat(value) : (typeof value === 'number' ? value : 0);
   const item = data[index];
-  if (!item) return null;
+  if (!item || valueNum === 0) return null;
 
   const cx = xNum + widthNum / 2;
   const avatarSize = 20;

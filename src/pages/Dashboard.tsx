@@ -84,8 +84,9 @@ export default function Dashboard() {
 
   function handleError(err: unknown) {
     if (err instanceof Error) {
-      if (err.message.includes("403")) setAppState("rate_limit");
-      else if (err.message.includes("404")) {
+      if (err.message.includes("403")) {
+        setAppState("rate_limit");
+      } else if (err.message.includes("404")) {
         setAppState("not_found");
         setErrorMessage("Not found");
       } else {
@@ -140,7 +141,7 @@ export default function Dashboard() {
 
         {/* Loading */}
         {appState === "loading" && (
-          <div className="flex-1 flex items-center justify-center min-h-[400px]">
+          <div className="flex-1 flex items-center justify-center min-h-64">
             <div className="text-center">
               <div className="inline-block animate-spin text-4xl mb-4">⏳</div>
               <p className="text-sm text-slate-500 font-medium">
@@ -161,7 +162,9 @@ export default function Dashboard() {
                 </h3>
                 <p className="text-amber-800 text-sm mt-1 leading-relaxed">
                   Add a GitHub token to your{" "}
-                  <code className="bg-amber-100 px-2 py-0.5 rounded text-xs">.env</code>{" "}
+                  <code className="bg-amber-100 px-2 py-0.5 rounded text-xs">
+                    .env
+                  </code>{" "}
                   file to get 5,000 requests/hour.
                 </p>
                 <a
@@ -228,22 +231,21 @@ export default function Dashboard() {
             />
 
             {/* Top Section */}
-            <div
-              className="grid grid-cols-1 lg:grid-cols-[40%_1fr] gap-4"
-              style={{
-                height: "clamp(380px, calc(50vh - 80px), 520px)",
-              }}
-            >
-              <TopLanguages languages={languages} loading={languagesLoading} />
-              <TopRepos repos={repos} />
+            <div className="grid grid-cols-1 lg:grid-cols-[40%_1fr] gap-4">
+              {/* ← min-w-0 overflow-hidden ป้องกันล้น */}
+              <div className="h-auto lg:h-[520px] min-w-0 overflow-hidden">
+                <TopLanguages
+                  languages={languages}
+                  loading={languagesLoading}
+                />
+              </div>
+              <div className="h-auto lg:h-[520px] min-w-0 overflow-hidden">
+                <TopRepos repos={repos} />
+              </div>
             </div>
 
             {/* Trending */}
-            <div
-              style={{
-                height: "clamp(340px, calc(45vh - 60px), 480px)",
-              }}
-            >
+            <div className="h-auto lg:h-[480px] min-w-0 overflow-hidden">
               <TrendingRepos />
             </div>
           </>

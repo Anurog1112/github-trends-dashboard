@@ -66,13 +66,12 @@ export function TopLanguages({ languages, loading }: TopLanguagesProps) {
       : "Based on top 100 most starred · Least used first";
 
   return (
-    <div className="card-elevated p-5 flex flex-col h-full">
+    <div className="card-elevated p-5 flex flex-col h-auto lg:h-full">
 
       {/* Header */}
       <div className="shrink-0 mb-3">
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-base font-bold text-slate-900">Top Languages</h2>
-
           <div className="flex items-center gap-2">
             <button
               onClick={() =>
@@ -88,12 +87,15 @@ export function TopLanguages({ languages, loading }: TopLanguagesProps) {
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M3 4h13M3 8h9M3 12h5m8 0l4-4m0 0l4 4m-4-4v12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4h13M3 8h9M3 12h5m8 0l4-4m0 0l4 4m-4-4v12"
+                />
               </svg>
               {sortOrder === "desc" ? "Most Used" : "Least Used"}
             </button>
-
             <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
               Global
             </span>
@@ -102,7 +104,7 @@ export function TopLanguages({ languages, loading }: TopLanguagesProps) {
         <p className="text-xs text-slate-400">{subtitleText}</p>
       </div>
 
-      {/* Content — ← แก้ตรงนี้ ใช้ overflow-y-auto แทน overflow-hidden */}
+      {/* Content */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         {loading ? (
           <div className="flex flex-col gap-4 pt-2">
@@ -124,7 +126,6 @@ export function TopLanguages({ languages, loading }: TopLanguagesProps) {
               <div key={lang.name}>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    {/* Rank — ตอนนี้เริ่มจาก #1 เสมอ ไม่ถูกบัง */}
                     <span className="text-xs font-bold text-slate-300 w-5">
                       #{idx + 1}
                     </span>
