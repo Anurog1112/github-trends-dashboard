@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "../components/layout";
-import { TopRepos, TrendingRepos } from "../components/sections";
+import { TopRepos, TrendingRepos, StatsBar } from "../components/sections";
 import {
   TopLanguages,
   calculateTopLanguages,
@@ -11,6 +11,8 @@ import {
   getUserRepos,
   getRepo,
   getTopRepositories,
+  getRateLimit,
+  getTrendingCount,
 } from "../services/github";
 import type { Repository, TopLanguage } from "../types";
 import type { SearchMode } from "../components/layout";
@@ -21,10 +23,17 @@ export default function Dashboard() {
   const [repos, setRepos] = useState<Repository[]>([]);
   const [appState, setAppState] = useState<AppState>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  // Languages — fetch ครั้งเดียว ไม่ขึ้นกับ search
   const [languages, setLanguages] = useState<TopLanguage[]>([]);
   const [languagesLoading, setLanguagesLoading] = useState<boolean>(true);
 
+  // Stats Bar
+  const [trendingThisWeek, setTrendingThisWeek] = useState<number>(0);
+  const [apiRemaining, setApiRemaining] = useState<number>(5000);
+  const [apiLimit, setApiLimit] = useState<number>(5000);
 
+  // Languages — fetch ครั้งเดียว
   useEffect(() => {
     async function fetchLanguages() {
       try {
@@ -39,6 +48,34 @@ export default function Dashboard() {
     fetchLanguages();
   }, []);
 
+  // Rate Limit — fetch ครั้งเดียวตอนเปิดหน้า
+  useEffect(() => {
+    async function fetchRateLimit() {
+      try {
+        const rate = await getRateLimit();
+        setApiRemaining(rate.remaining);
+        setApiLimit(rate.limit);
+      } catch {
+        // ไม่ทำอะไรถ้า fetch ไม่ได้
+      }
+    }
+    fetchRateLimit();
+  }, []);
+
+  // Trending Count — fetch ครั้งเดียว per_page=1 ประหยัด quota
+  useEffect(() => {
+    async function fetchTrendingCount() {
+      try {
+        const count = await getTrendingCount(7);
+        setTrendingThisWeek(count);
+      } catch {
+        setTrendingThisWeek(0);
+      }
+    }
+    fetchTrendingCount();
+  }, []);
+
+  // Default repos ตอนเปิดหน้า
   useEffect(() => {
     loadDefault();
   }, []);
@@ -47,8 +84,8 @@ export default function Dashboard() {
     setAppState("loading");
     setErrorMessage("");
     try {
-      const data = await searchRepositories("stars:>100000");
-      setRepos(data);
+      const { items } = await searchRepositories("stars:>100000");
+      setRepos(items);
       setAppState("idle");
     } catch (err) {
       handleError(err);
@@ -96,13 +133,13 @@ export default function Dashboard() {
           // 404 → fallback
         }
 
-        const data = await searchRepositories(mode.query);
-        if (data.length === 0) {
+        const { items } = await searchRepositories(mode.query);
+        if (items.length === 0) {
           setAppState("not_found");
           setErrorMessage(`No results for "${mode.query}"`);
           return;
         }
-        setRepos(data);
+        setRepos(items);
         setAppState("idle");
       }
     } catch (err) {
@@ -111,14 +148,14 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
+
       <Navbar onSearch={handleSearch} onClear={loadDefault} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
+      <main className="flex-1 overflow-hidden flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 
-        {/* Loading */}
         {appState === "loading" && (
-          <div className="flex items-center justify-center py-20">
+          <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="inline-block animate-spin text-4xl mb-4">⏳</div>
               <p className="text-sm text-slate-500 font-medium">
@@ -128,9 +165,8 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Rate Limit */}
         {appState === "rate_limit" && (
-          <div className="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-6 mb-6">
+          <div className="bg-amber-50 border-l-4 border-amber-500 rounded-xl p-6">
             <div className="flex items-start gap-4">
               <span className="text-3xl shrink-0">⚠️</span>
               <div>
@@ -157,9 +193,8 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Error */}
         {appState === "error" && (
-          <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-6 mb-6">
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-6">
             <div className="flex items-start gap-4">
               <span className="text-3xl shrink-0">❌</span>
               <div>
@@ -169,7 +204,7 @@ export default function Dashboard() {
                 <p className="text-red-800 text-sm mt-1">{errorMessage}</p>
                 <button
                   onClick={loadDefault}
-                  className="mt-3 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                  className="mt-3 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors"
                 >
                   Try Again
                 </button>
@@ -178,7 +213,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Not Found */}
         {appState === "not_found" && (
           <div className="card-elevated p-8 text-center">
             <EmptyState
@@ -187,26 +221,37 @@ export default function Dashboard() {
             />
             <button
               onClick={loadDefault}
-              className="mt-6 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="mt-6 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
             >
               Back to Trending
             </button>
           </div>
         )}
 
-        {/* Content */}
         {appState === "idle" && (
-          <div className="space-y-6">
-            {/* Top Section — ไม่มี items-start scroll อยู่ในกล่อง */}
-            <div className="grid grid-cols-1 lg:grid-cols-[40%_1fr] gap-6">
-              <TopLanguages
-                languages={languages}
-                loading={languagesLoading}
-              />
+          <div className="flex-1 flex flex-col gap-4 min-h-0">
+
+            <StatsBar
+              trendingThisWeek={trendingThisWeek}
+              highestStars={repos[0]?.stargazers_count ?? 0}
+              topLanguage={languages[0]?.name ?? "—"}
+              topLanguagePercent={languages[0]?.percentage ?? 0}
+              apiRemaining={apiRemaining}
+              apiLimit={apiLimit}
+            />
+
+            <div
+              className="grid grid-cols-1 lg:grid-cols-[40%_1fr] gap-4 min-h-0"
+              style={{ flex: "5 1 0%" }}
+            >
+              <TopLanguages languages={languages} loading={languagesLoading} />
               <TopRepos repos={repos} />
             </div>
 
-            <TrendingRepos />
+            <div className="min-h-0" style={{ flex: "4 1 0%" }}>
+              <TrendingRepos />
+            </div>
+
           </div>
         )}
 

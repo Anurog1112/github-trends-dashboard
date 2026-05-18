@@ -11,24 +11,27 @@ const headers = {
 
 async function safeFetch(url: string): Promise<unknown> {
   const res = await fetch(url, { headers });
-
-  if (res.status === 403) {
-    throw new Error("403 Rate limit exceeded");
-  }
-  if (res.status === 404) {
-    throw new Error("404 Not found");
-  }
-  if (!res.ok) {
-    throw new Error(`${res.status} Request failed`);
-  }
-
+  if (res.status === 403) throw new Error("403 Rate limit exceeded");
+  if (res.status === 404) throw new Error("404 Not found");
+  if (!res.ok) throw new Error(`${res.status} Request failed`);
   return res.json();
 }
 
-export async function searchRepositories(query: string): Promise<Repository[]> {
+export interface SearchResult {
+  items: Repository[];
+  total_count: number;
+}
+
+export interface RateLimitInfo {
+  limit: number;
+  remaining: number;
+  used: number;
+}
+
+export async function searchRepositories(query: string): Promise<SearchResult> {
   const url = `${BASE_URL}/search/repositories?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=30`;
   const data = await safeFetch(url) as SearchRepositoriesResponse;
-  return data.items;
+  return { items: data.items, total_count: data.total_count };
 }
 
 export async function getUserRepos(username: string): Promise<Repository[]> {
@@ -50,13 +53,21 @@ export async function getTrendingRepositories(days: number): Promise<Repository[
   return data.items;
 }
 
-export async function getRateLimit() {
-  const url = `${BASE_URL}/rate_limit`;
-  return safeFetch(url);
+export async function getTrendingCount(days: number): Promise<number> {
+  const date = getDateBefore(days);
+  const url = `${BASE_URL}/search/repositories?q=created:>${date}&sort=stars&order=desc&per_page=1`;
+  const data = await safeFetch(url) as SearchRepositoriesResponse;
+  return data.total_count;
 }
 
 export async function getTopRepositories(): Promise<Repository[]> {
   const url = `${BASE_URL}/search/repositories?q=stars:>10000&sort=stars&order=desc&per_page=100`;
   const data = await safeFetch(url) as SearchRepositoriesResponse;
   return data.items;
+}
+
+export async function getRateLimit(): Promise<RateLimitInfo> {
+  const url = `${BASE_URL}/rate_limit`;
+  const data = await safeFetch(url) as { rate: RateLimitInfo };
+  return data.rate;
 }
