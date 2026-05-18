@@ -54,3 +54,9 @@ export async function getRateLimit() {
   const url = `${BASE_URL}/rate_limit`;
   return safeFetch(url);
 }
+
+export async function getTopRepositories(): Promise<Repository[]> {
+  const url = `${BASE_URL}/search/repositories?q=stars:>10000&sort=stars&order=desc&per_page=100`;
+  const data = await safeFetch(url) as SearchRepositoriesResponse;
+  return data.items;
+}

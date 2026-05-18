@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "../components/layout";
-import { TopLanguages, TopRepos, TrendingRepos } from "../components/sections";
+import { TopRepos, TrendingRepos } from "../components/sections";
+import { TopLanguages, calculateTopLanguages } from "../components/sections/TopLanguages";
 import { EmptyState } from "../components/sections/ui";
 import {
   searchRepositories,
   getUserRepos,
   getRepo,
+  getTopRepositories,
 } from "../services/github";
-import type { Repository } from "../types";
+import type { Repository, TopLanguage } from "../types";
 import type { SearchMode } from "../components/layout";
 
 type AppState = "idle" | "loading" | "error" | "rate_limit" | "not_found";
@@ -16,6 +18,23 @@ export default function Dashboard() {
   const [repos, setRepos] = useState<Repository[]>([]);
   const [appState, setAppState] = useState<AppState>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  const [languages, setLanguages] = useState<TopLanguage[]>([]);
+  const [languagesLoading, setLanguagesLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    async function fetchLanguages() {
+      try {
+        const data = await getTopRepositories();
+        setLanguages(calculateTopLanguages(data));
+      } catch {
+        setLanguages([]);
+      } finally {
+        setLanguagesLoading(false);
+      }
+    }
+    fetchLanguages();
+  }, []);
 
   useEffect(() => {
     loadDefault();
@@ -48,7 +67,6 @@ export default function Dashboard() {
   }
 
   async function handleSearch(mode: SearchMode) {
-    // invalid input — ผิด format
     if (mode.type === "invalid") {
       setAppState("error");
       setErrorMessage(mode.reason);
@@ -63,7 +81,6 @@ export default function Dashboard() {
         const repo = await getRepo(mode.owner, mode.repo);
         setRepos([repo]);
         setAppState("idle");
-
       } else {
         try {
           const data = await getUserRepos(mode.query);
@@ -73,7 +90,7 @@ export default function Dashboard() {
             return;
           }
         } catch {
-            // if user not found, fallback to search
+          // 404 → fallback
         }
 
         const data = await searchRepositories(mode.query);
@@ -85,7 +102,6 @@ export default function Dashboard() {
         setRepos(data);
         setAppState("idle");
       }
-
     } catch (err) {
       handleError(err);
     }
@@ -93,10 +109,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar
-        onSearch={handleSearch}
-        onClear={loadDefault}
-      />
+      <Navbar onSearch={handleSearch} onClear={loadDefault} />
 
       <main className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-6">
 
@@ -108,9 +121,7 @@ export default function Dashboard() {
 
         {appState === "rate_limit" && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-            <p className="font-bold text-yellow-800">
-              ⚠️ API Rate Limit Exceeded
-            </p>
+            <p className="font-bold text-yellow-800">⚠️ API Rate Limit Exceeded</p>
             <p className="text-sm text-yellow-700 mt-1">
               Add a GitHub Token to your .env to get 5,000 requests/hour
             </p>
@@ -119,23 +130,21 @@ export default function Dashboard() {
 
         {appState === "error" && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <p className="text-red-700 font-semibold text-sm">
-              ⛔ {errorMessage}
-            </p>
+            <p className="text-red-700 font-semibold text-sm">⛔ {errorMessage}</p>
           </div>
         )}
 
         {appState === "not_found" && (
-          <EmptyState
-            title="No results found"
-            message={errorMessage}
-          />
+          <EmptyState title="No results found" message={errorMessage} />
         )}
 
         {appState === "idle" && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-[40%_1fr] gap-6">
-              <TopLanguages repos={repos} />
+              <TopLanguages
+                languages={languages}
+                loading={languagesLoading}
+              />
               <TopRepos repos={repos} />
             </div>
             <TrendingRepos />
