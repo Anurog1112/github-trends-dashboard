@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Repository, TopLanguage } from "../../types";
 import { EmptyState } from "./ui";
 
@@ -29,7 +30,7 @@ const LANGUAGE_COLORS: Record<string, string> = {
   Java: "from-orange-500 to-orange-600",
   Go: "from-cyan-500 to-cyan-600",
   Rust: "from-orange-600 to-red-600",
-  "C++": "from-blue-600 to-purple-600",
+  "C++": "from-pink-500 to-pink-600",
   "C#": "from-purple-500 to-purple-600",
   PHP: "from-purple-600 to-purple-700",
   Ruby: "from-red-500 to-red-600",
@@ -41,30 +42,70 @@ function getLanguageColor(lang: string): string {
   return LANGUAGE_COLORS[lang] || "from-slate-400 to-slate-500";
 }
 
+type SortOrder = "desc" | "asc";
+
 interface TopLanguagesProps {
   languages: TopLanguage[];
   loading: boolean;
 }
 
 export function TopLanguages({ languages, loading }: TopLanguagesProps) {
-  return (
-    <div className="card-elevated p-5 flex flex-col h-full overflow-hidden">
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
-      <div className="shrink-0 mb-4">
+  const sorted = [...languages]
+    .sort((a, b) =>
+      sortOrder === "desc"
+        ? b.percentage - a.percentage
+        : a.percentage - b.percentage
+    )
+    .map((lang, index) => ({ ...lang, rank: index + 1 }));
+
+  const subtitleText =
+    sortOrder === "desc"
+      ? "Based on top 100 most starred · Most used first"
+      : "Based on top 100 most starred · Least used first";
+
+  return (
+    <div className="card-elevated p-5 flex flex-col h-full">
+
+      {/* Header */}
+      <div className="shrink-0 mb-3">
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-base font-bold text-slate-900">Top Languages</h2>
-          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-            Global
-          </span>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() =>
+                setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
+              }
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all"
+            >
+              <svg
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                  sortOrder === "asc" ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M3 4h13M3 8h9M3 12h5m8 0l4-4m0 0l4 4m-4-4v12" />
+              </svg>
+              {sortOrder === "desc" ? "Most Used" : "Least Used"}
+            </button>
+
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Global
+            </span>
+          </div>
         </div>
-        <p className="text-xs text-slate-400">
-          Based on top 100 most starred repositories
-        </p>
+        <p className="text-xs text-slate-400">{subtitleText}</p>
       </div>
 
-      <div className="flex-1 flex flex-col justify-center overflow-hidden">
+      {/* Content — ← แก้ตรงนี้ ใช้ overflow-y-auto แทน overflow-hidden */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {loading ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 pt-2">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="flex justify-between mb-2">
@@ -78,11 +119,12 @@ export function TopLanguages({ languages, loading }: TopLanguagesProps) {
         ) : languages.length === 0 ? (
           <EmptyState title="No language data" message="Data unavailable" />
         ) : (
-          <div className="flex flex-col gap-4">
-            {languages.map((lang, idx) => (
+          <div className="flex flex-col gap-5 pt-1">
+            {sorted.map((lang, idx) => (
               <div key={lang.name}>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
+                    {/* Rank — ตอนนี้เริ่มจาก #1 เสมอ ไม่ถูกบัง */}
                     <span className="text-xs font-bold text-slate-300 w-5">
                       #{idx + 1}
                     </span>
@@ -100,10 +142,7 @@ export function TopLanguages({ languages, loading }: TopLanguagesProps) {
                 <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                   <div
                     className={`h-full rounded-full bg-gradient-to-r ${getLanguageColor(lang.name)}`}
-                    style={{
-                      width: `${lang.percentage}%`,
-                      animation: `slideIn 0.6s ease-out ${idx * 0.1}s both`,
-                    }}
+                    style={{ width: `${lang.percentage}%` }}
                   />
                 </div>
               </div>
@@ -112,12 +151,6 @@ export function TopLanguages({ languages, loading }: TopLanguagesProps) {
         )}
       </div>
 
-      <style>{`
-        @keyframes slideIn {
-          from { width: 0; opacity: 0; }
-          to { opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }

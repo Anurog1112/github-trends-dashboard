@@ -23,17 +23,12 @@ export default function Dashboard() {
   const [repos, setRepos] = useState<Repository[]>([]);
   const [appState, setAppState] = useState<AppState>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
-
-  // Languages — fetch ครั้งเดียว ไม่ขึ้นกับ search
   const [languages, setLanguages] = useState<TopLanguage[]>([]);
   const [languagesLoading, setLanguagesLoading] = useState<boolean>(true);
-
-  // Stats Bar
   const [trendingThisWeek, setTrendingThisWeek] = useState<number>(0);
   const [apiRemaining, setApiRemaining] = useState<number>(5000);
   const [apiLimit, setApiLimit] = useState<number>(5000);
 
-  // Languages — fetch ครั้งเดียว
   useEffect(() => {
     async function fetchLanguages() {
       try {
@@ -48,21 +43,17 @@ export default function Dashboard() {
     fetchLanguages();
   }, []);
 
-  // Rate Limit — fetch ครั้งเดียวตอนเปิดหน้า
   useEffect(() => {
     async function fetchRateLimit() {
       try {
         const rate = await getRateLimit();
         setApiRemaining(rate.remaining);
         setApiLimit(rate.limit);
-      } catch {
-        // ไม่ทำอะไรถ้า fetch ไม่ได้
-      }
+      } catch {}
     }
     fetchRateLimit();
   }, []);
 
-  // Trending Count — fetch ครั้งเดียว per_page=1 ประหยัด quota
   useEffect(() => {
     async function fetchTrendingCount() {
       try {
@@ -75,7 +66,6 @@ export default function Dashboard() {
     fetchTrendingCount();
   }, []);
 
-  // Default repos ตอนเปิดหน้า
   useEffect(() => {
     loadDefault();
   }, []);
@@ -94,9 +84,8 @@ export default function Dashboard() {
 
   function handleError(err: unknown) {
     if (err instanceof Error) {
-      if (err.message.includes("403")) {
-        setAppState("rate_limit");
-      } else if (err.message.includes("404")) {
+      if (err.message.includes("403")) setAppState("rate_limit");
+      else if (err.message.includes("404")) {
         setAppState("not_found");
         setErrorMessage("Not found");
       } else {
@@ -112,10 +101,8 @@ export default function Dashboard() {
       setErrorMessage(mode.reason);
       return;
     }
-
     setAppState("loading");
     setErrorMessage("");
-
     try {
       if (mode.type === "fullRepo") {
         const repo = await getRepo(mode.owner, mode.repo);
@@ -129,10 +116,7 @@ export default function Dashboard() {
             setAppState("idle");
             return;
           }
-        } catch {
-          // 404 → fallback
-        }
-
+        } catch {}
         const { items } = await searchRepositories(mode.query);
         if (items.length === 0) {
           setAppState("not_found");
@@ -148,14 +132,15 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
 
       <Navbar onSearch={handleSearch} onClear={loadDefault} />
 
-      <main className="flex-1 overflow-hidden flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4">
 
+        {/* Loading */}
         {appState === "loading" && (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="inline-block animate-spin text-4xl mb-4">⏳</div>
               <p className="text-sm text-slate-500 font-medium">
@@ -165,6 +150,7 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Rate Limit */}
         {appState === "rate_limit" && (
           <div className="bg-amber-50 border-l-4 border-amber-500 rounded-xl p-6">
             <div className="flex items-start gap-4">
@@ -174,10 +160,8 @@ export default function Dashboard() {
                   API Rate Limit Exceeded
                 </h3>
                 <p className="text-amber-800 text-sm mt-1 leading-relaxed">
-                  Add a GitHub personal access token to your{" "}
-                  <code className="bg-amber-100 px-2 py-0.5 rounded text-xs">
-                    .env
-                  </code>{" "}
+                  Add a GitHub token to your{" "}
+                  <code className="bg-amber-100 px-2 py-0.5 rounded text-xs">.env</code>{" "}
                   file to get 5,000 requests/hour.
                 </p>
                 <a
@@ -193,6 +177,7 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Error */}
         {appState === "error" && (
           <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-6">
             <div className="flex items-start gap-4">
@@ -213,6 +198,7 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Not Found */}
         {appState === "not_found" && (
           <div className="card-elevated p-8 text-center">
             <EmptyState
@@ -228,9 +214,10 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Content */}
         {appState === "idle" && (
-          <div className="flex-1 flex flex-col gap-4 min-h-0">
-
+          <>
+            {/* Stats Bar */}
             <StatsBar
               trendingThisWeek={trendingThisWeek}
               highestStars={repos[0]?.stargazers_count ?? 0}
@@ -240,19 +227,26 @@ export default function Dashboard() {
               apiLimit={apiLimit}
             />
 
+            {/* Top Section */}
             <div
-              className="grid grid-cols-1 lg:grid-cols-[40%_1fr] gap-4 min-h-0"
-              style={{ flex: "5 1 0%" }}
+              className="grid grid-cols-1 lg:grid-cols-[40%_1fr] gap-4"
+              style={{
+                height: "clamp(380px, calc(50vh - 80px), 520px)",
+              }}
             >
               <TopLanguages languages={languages} loading={languagesLoading} />
               <TopRepos repos={repos} />
             </div>
 
-            <div className="min-h-0" style={{ flex: "4 1 0%" }}>
+            {/* Trending */}
+            <div
+              style={{
+                height: "clamp(340px, calc(45vh - 60px), 480px)",
+              }}
+            >
               <TrendingRepos />
             </div>
-
-          </div>
+          </>
         )}
 
       </main>
