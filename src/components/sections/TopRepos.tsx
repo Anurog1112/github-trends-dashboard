@@ -278,53 +278,59 @@ export function TopRepos({ repos }: TopReposProps) {
       {/* Chart View */}
       {view === "chart" && (
         <div className="flex-1 min-h-0 flex flex-col">
-          <ResponsiveContainer width="100%" height="90%">
-            <BarChart
-              data={chartData}
-              margin={{ top: 52, right: 8, left: 0, bottom: 4 }}
-              barCategoryGap="25%"
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#F1F5F9"
-              />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 10, fill: "#94A3B8" }}
-                axisLine={false}
-                tickLine={false}
-                interval={0}
-              />
-              <YAxis
-                tickFormatter={(v) => formatNumber(v)}
-                tick={{ fontSize: 10, fill: "#94A3B8" }}
-                axisLine={false}
-                tickLine={false}
-                width={38}
-              />
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{ fill: "#F8FAFC" }}
-              />
-              <Bar
-                dataKey="stars"
-                radius={[6, 6, 0, 0]}
-                maxBarSize={44}
-                label={(props) => (
-                  <CustomBarLabel {...props} data={chartData} />
-                )}
+
+          {/* ← กุญแจสำคัญ */}
+          {/* Mobile  → h-[280px] fixed */}
+          {/* Desktop → flex-1 min-h-0 */}
+          <div className="h-[280px] lg:h-auto lg:flex-1 lg:min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 52, right: 8, left: 0, bottom: 4 }}
+                barCategoryGap="25%"
               >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={index}
-                    fill={LANG_COLORS[entry.language ?? ""] ?? "#3B82F6"}
-                    fillOpacity={0.85}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#F1F5F9"
+                />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: "#94A3B8" }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval={0}
+                />
+                <YAxis
+                  tickFormatter={(v) => formatNumber(v)}
+                  tick={{ fontSize: 10, fill: "#94A3B8" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={38}
+                />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{ fill: "#F8FAFC" }}
+                />
+                <Bar
+                  dataKey="stars"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={44}
+                  label={(props) => (
+                    <CustomBarLabel {...props} data={chartData} />
+                  )}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={index}
+                      fill={LANG_COLORS[entry.language ?? ""] ?? "#3B82F6"}
+                      fillOpacity={0.85}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
 
           {/* Language Legend */}
           <div className="flex flex-wrap justify-center gap-3 mt-1 shrink-0">
@@ -334,9 +340,7 @@ export function TopRepos({ repos }: TopReposProps) {
               <div key={lang} className="flex items-center gap-1.5">
                 <span
                   className="w-2.5 h-2.5 rounded-full"
-                  style={{
-                    backgroundColor: LANG_COLORS[lang!] ?? "#94A3B8",
-                  }}
+                  style={{ backgroundColor: LANG_COLORS[lang!] ?? "#94A3B8" }}
                 />
                 <span className="text-xs text-slate-500">{lang}</span>
               </div>
@@ -348,6 +352,7 @@ export function TopRepos({ repos }: TopReposProps) {
           </p>
         </div>
       )}
+
 
       {/* List View */}
       {view === "list" && (
