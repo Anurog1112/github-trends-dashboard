@@ -22,6 +22,25 @@ export function calculateTopLanguages(repos: Repository[]): TopLanguage[] {
     .map((lang, index) => ({ ...lang, rank: index + 1 }));
 }
 
+const LANGUAGE_COLORS: Record<string, string> = {
+  TypeScript: "from-blue-500 to-blue-600",
+  JavaScript: "from-yellow-400 to-yellow-500",
+  Python: "from-blue-400 to-blue-500",
+  Java: "from-orange-500 to-orange-600",
+  Go: "from-cyan-500 to-cyan-600",
+  Rust: "from-orange-600 to-red-600",
+  "C++": "from-blue-600 to-purple-600",
+  "C#": "from-purple-500 to-purple-600",
+  PHP: "from-purple-600 to-purple-700",
+  Ruby: "from-red-500 to-red-600",
+  Shell: "from-green-500 to-green-600",
+  Markdown: "from-slate-500 to-slate-600",
+};
+
+function getLanguageColor(lang: string): string {
+  return LANGUAGE_COLORS[lang] || "from-slate-400 to-slate-500";
+}
+
 interface TopLanguagesProps {
   languages: TopLanguage[];
   loading: boolean;
@@ -29,47 +48,76 @@ interface TopLanguagesProps {
 
 export function TopLanguages({ languages, loading }: TopLanguagesProps) {
   return (
-    <div className="bg-white rounded-lg p-4">
-      <div className="flex items-center justify-between mb-1">
-        <h2 className="font-bold text-gray-900">Top Languages</h2>
-        <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
-          Global
-        </span>
-      </div>
-      <p className="text-xs text-gray-400 mb-4">
-        Based on top 100 most starred repositories
-      </p>
+    <div className="card-elevated p-5 flex flex-col h-full overflow-hidden">
 
-      {loading ? (
-        <p className="text-sm text-gray-400">Loading...</p>
-      ) : languages.length === 0 ? (
-        <EmptyState title="No language data" message="Data unavailable" />
-      ) : (
-        <div className="flex flex-col gap-4">
-          {languages.map((lang) => (
-            <div key={lang.name}>
-              <div className="flex justify-between items-center mb-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400 w-4">#{lang.rank}</span>
-                  <span className="text-sm text-gray-700 font-medium">{lang.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400">{lang.count} repos</span>
-                  <span className="text-xs font-medium text-gray-600 w-8 text-right">
-                    {lang.percentage}%
-                  </span>
-                </div>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-2">
-                <div
-                  className="bg-blue-500 h-2 rounded-full"
-                  style={{ width: `${lang.percentage}%` }}
-                />
-              </div>
-            </div>
-          ))}
+      <div className="shrink-0 mb-4">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-base font-bold text-slate-900">Top Languages</h2>
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Global
+          </span>
         </div>
-      )}
+        <p className="text-xs text-slate-400">
+          Based on top 100 most starred repositories
+        </p>
+      </div>
+
+      <div className="flex-1 flex flex-col justify-center overflow-hidden">
+        {loading ? (
+          <div className="flex flex-col gap-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="flex justify-between mb-2">
+                  <div className="h-3 bg-slate-200 rounded w-24" />
+                  <div className="h-3 bg-slate-100 rounded w-16" />
+                </div>
+                <div className="h-2 bg-slate-100 rounded-full w-full" />
+              </div>
+            ))}
+          </div>
+        ) : languages.length === 0 ? (
+          <EmptyState title="No language data" message="Data unavailable" />
+        ) : (
+          <div className="flex flex-col gap-4">
+            {languages.map((lang, idx) => (
+              <div key={lang.name}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-300 w-5">
+                      #{idx + 1}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-700">
+                      {lang.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="text-slate-400">{lang.count} repos</span>
+                    <span className="font-bold text-blue-600 w-8 text-right">
+                      {lang.percentage}%
+                    </span>
+                  </div>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r ${getLanguageColor(lang.name)}`}
+                    style={{
+                      width: `${lang.percentage}%`,
+                      animation: `slideIn 0.6s ease-out ${idx * 0.1}s both`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes slideIn {
+          from { width: 0; opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }

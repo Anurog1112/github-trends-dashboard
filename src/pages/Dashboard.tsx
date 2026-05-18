@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "../components/layout";
 import { TopRepos, TrendingRepos } from "../components/sections";
-import { TopLanguages, calculateTopLanguages } from "../components/sections/TopLanguages";
+import {
+  TopLanguages,
+  calculateTopLanguages,
+} from "../components/sections/TopLanguages";
 import { EmptyState } from "../components/sections/ui";
 import {
   searchRepositories,
@@ -18,9 +21,9 @@ export default function Dashboard() {
   const [repos, setRepos] = useState<Repository[]>([]);
   const [appState, setAppState] = useState<AppState>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
-
   const [languages, setLanguages] = useState<TopLanguage[]>([]);
   const [languagesLoading, setLanguagesLoading] = useState<boolean>(true);
+
 
   useEffect(() => {
     async function fetchLanguages() {
@@ -108,47 +111,103 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <Navbar onSearch={handleSearch} onClear={loadDefault} />
 
-      <main className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
 
+        {/* Loading */}
         {appState === "loading" && (
-          <div className="text-center py-12 text-gray-400 text-sm">
-            Loading...
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="inline-block animate-spin text-4xl mb-4">⏳</div>
+              <p className="text-sm text-slate-500 font-medium">
+                Loading trending data...
+              </p>
+            </div>
           </div>
         )}
 
+        {/* Rate Limit */}
         {appState === "rate_limit" && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-            <p className="font-bold text-yellow-800">⚠️ API Rate Limit Exceeded</p>
-            <p className="text-sm text-yellow-700 mt-1">
-              Add a GitHub Token to your .env to get 5,000 requests/hour
-            </p>
+          <div className="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-6 mb-6">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl shrink-0">⚠️</span>
+              <div>
+                <h3 className="font-bold text-amber-900 text-lg">
+                  API Rate Limit Exceeded
+                </h3>
+                <p className="text-amber-800 text-sm mt-1 leading-relaxed">
+                  Add a GitHub personal access token to your{" "}
+                  <code className="bg-amber-100 px-2 py-0.5 rounded text-xs">
+                    .env
+                  </code>{" "}
+                  file to get 5,000 requests/hour.
+                </p>
+                <a
+                  href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-amber-700 text-xs mt-2 inline-block hover:underline"
+                >
+                  📚 Learn how to create a token →
+                </a>
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Error */}
         {appState === "error" && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <p className="text-red-700 font-semibold text-sm">⛔ {errorMessage}</p>
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-6 mb-6">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl shrink-0">❌</span>
+              <div>
+                <h3 className="font-bold text-red-900 text-lg">
+                  Something went wrong
+                </h3>
+                <p className="text-red-800 text-sm mt-1">{errorMessage}</p>
+                <button
+                  onClick={loadDefault}
+                  className="mt-3 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Not Found */}
         {appState === "not_found" && (
-          <EmptyState title="No results found" message={errorMessage} />
+          <div className="card-elevated p-8 text-center">
+            <EmptyState
+              title="No results found"
+              message={errorMessage || "Try adjusting your search terms"}
+            />
+            <button
+              onClick={loadDefault}
+              className="mt-6 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Back to Trending
+            </button>
+          </div>
         )}
 
+        {/* Content */}
         {appState === "idle" && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-[40%_1fr] gap-6">
+          <div className="space-y-6">
+            {/* Top Section — ไม่มี items-start scroll อยู่ในกล่อง */}
+            <div className="grid grid-cols-1 lg:grid-cols-[40%_1fr] gap-6">
               <TopLanguages
                 languages={languages}
                 loading={languagesLoading}
               />
               <TopRepos repos={repos} />
             </div>
+
             <TrendingRepos />
-          </>
+          </div>
         )}
 
       </main>

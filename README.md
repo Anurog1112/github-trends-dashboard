@@ -73,5 +73,21 @@ cp .env.example .env
 
 # Run the development server
 npm run dev
+```
 
 ## 💭 What I'd improve with more time
+1. **Pagination** — search results show first page only (30 results).
+   Real search should let users load more.
+
+2. **Language filter** — let users filter top repos by language,
+   e.g. "show me the most starred Python repos."
+
+3. **Caching** — every page load re-fetches everything.
+   A simple localStorage cache with TTL would cut API usage significantly.
+
+4. **Larger sample for Top Languages** — 100 repos is fine for a demo,
+   but 500-1000 would give more statistically meaningful results.
+
+5. **Real trending data** — current "trending" is simulated by filtering
+   on creation date. A proper solution needs a backend that snapshots
+   star counts daily and computes the delta.
