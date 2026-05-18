@@ -23,7 +23,6 @@ export function detectSearchMode(query: string): SearchMode {
     };
   }
 
-  // มี / แต่ผิด format
   if (trimmed.includes("/")) {
     return {
       type: "invalid",
@@ -31,7 +30,7 @@ export function detectSearchMode(query: string): SearchMode {
     };
   }
 
-  // vercel, react, microsoft → ให้ระบบตัดสินใจเอง
+  // vercel, react, microsoft → Smart Search
   return { type: "smartSearch", query: trimmed };
 }
 
