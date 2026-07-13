@@ -4,13 +4,28 @@ import type { Repository, SearchRepositoriesResponse } from "../types";
 const TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 const BASE_URL = "https://api.github.com";
 
-const headers = {
-  "Authorization": `Bearer ${TOKEN}`,
-  "Content-Type": "application/vnd.github.v3+json",
-};
+function getHeaders(includeToken = true): HeadersInit {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+  };
+
+  if (includeToken && TOKEN?.trim()) {
+    headers.Authorization = `Bearer ${TOKEN.trim()}`;
+  }
+
+  return headers;
+}
 
 async function safeFetch(url: string): Promise<unknown> {
-  const res = await fetch(url, { headers });
+  let res = await fetch(url, { headers: getHeaders() });
+
+  if (res.status === 401 && TOKEN?.trim()) {
+    res = await fetch(url, { headers: getHeaders(false) });
+  }
+
+  if (res.status === 401) {
+    throw new Error("401 Bad GitHub token. Update VITE_GITHUB_TOKEN in .env or remove it to use public API quota.");
+  }
   if (res.status === 403) throw new Error("403 Rate limit exceeded");
   if (res.status === 404) throw new Error("404 Not found");
   if (!res.ok) throw new Error(`${res.status} Request failed`);
